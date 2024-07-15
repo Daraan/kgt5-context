@@ -1,6 +1,6 @@
 
 dataset:
-  name: wikidata5m
+  name: yago3-10 
 
   # use original KGT5 without context
   v1: False
@@ -19,10 +19,10 @@ context:
 descriptions:
   use: False
 train:
-  batch_size: 64
-  max_epochs: 100
+  batch_size: 48
+  max_epochs: 3 
   drop_subject: 0.0
-  num_workers: 4
+  num_workers: 16 
   precision: 16
   accelerator: auto
   devices: auto
@@ -48,5 +48,5 @@ hydra:
   job:
     chdir: False
   run:
-    dir: ./outputs/${dataset.name}/v1=${dataset.v1}/descriptions=${descriptions.use}/${now:%Y-%m-%d-%H-%M}
+    dir: ./outputs/${dataset.name}/pretrained=True/${now:%Y-%m-%d-%H-%M}
     #dir: ./tmp

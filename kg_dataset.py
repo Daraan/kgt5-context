@@ -45,7 +45,7 @@ class KGCDataset(Dataset):
             print("loading descriptions")
             self.description_separator = "<extra_id_96>"
             self.ent_descriptions = self.load_descriptions(self.dataset_name)
-
+        
         self._filter_dict = None
 
     @property
@@ -81,12 +81,16 @@ class KGCDataset(Dataset):
                 return out_dict
         out_dict = {}
         with open(fname, "r", encoding="utf-8") as f:
+          try:  
             for line in f:
                 if line[-1] == '\n':
                     line = line[:-1]
                 id, name = line.split('\t')
                 id = int(id)
                 out_dict[id] = name
+          except ValueError:
+              print("Problematic line:\n", line)
+              raise
         with open(pickle_file_name, "wb") as f:
             pickle.dump(out_dict, f)
         return out_dict
@@ -136,11 +140,21 @@ class KGCDataset(Dataset):
         return np.concatenate((triples, rev_triples), axis=0)
 
     def create_filter(self, splits: Union[List, Tuple] = ["train", "valid", "test"]):
+        try:
+            print("loading filter") 
+            with open(os.path.join(self.dataset_folder, "filter_dict.pckl"), "rb") as f:
+                self._filter_dict = pickle.load(f)
+            return self._filter_dict
+        except FileNotFoundError:
+            print("...filter_dict not found. Will be created later")
         filter_dict = defaultdict(list)
         for split in splits:
             print("creating filter dict for split", split)
             for triple in tqdm(self.get_split(split).tolist()):
                 filter_dict[(triple[0], triple[1])].append(self.ent_aliases[triple[2]])
+        with open(os.path.join(self.dataset_folder, "filter_dict.pckl"), "wb") as f:
+            pickle.dump(filter_dict, f)
+            
         return filter_dict
 
 

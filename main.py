@@ -24,7 +24,7 @@ def run(config: DictConfig) -> None:
             config.resume_from, config=config, data_module=dm
         )
     else:
-        model = KGT5_Model(config, data_module=dm)
+        model = KGT5_Model(config, data_module=dm, use_ptlm=True)
 
     checkpoint_monitor = ModelCheckpoint(
         filename="{epoch}-{step}",
@@ -32,7 +32,10 @@ def run(config: DictConfig) -> None:
         mode="max",
         save_top_k=config.checkpoint.keep_top_k,
     )
-
+    
+    #from pytorch_lightning.profilers import AdvancedProfiler
+    #profiler = AdvancedProfiler(dirpath="outputs", filename="perf_logs.log")
+    
     train_options = {
         'accelerator': config.train.accelerator,
         'devices': config.train.devices,
@@ -53,7 +56,7 @@ def run(config: DictConfig) -> None:
         #wandb_logger.experiment.config.update(config)
         train_options["logger"] = wandb_logger
 
-    trainer = pl.Trainer(**train_options, )#num_sanity_val_steps=0,)# val_check_interval=100)# limit_train_batches=1)
+    trainer = pl.Trainer(**train_options, val_check_interval=4000)#num_sanity_val_steps=0,)# val_check_interval=100)# limit_train_batches=1)
 
     if len(config.resume_from) != 0:
         trainer.fit(model, dm, ckpt_path=config.resume_from)  # , ckpt_path=ckpt_path)
